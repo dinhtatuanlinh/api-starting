@@ -1,0 +1,31 @@
+api này em dùng 6 router để truy xuất dữ liệu
+- phương thức get dùng để lấy toàn bộ dữ liệu với router /
+- và 1 phương thức get lấy 1 row theo id, router là /:id, id là id của row cân lấy
+- phương thưc post em dùng để write dữ liệu, router là /, các tham số truyền vào gồm username, email em truyền qua form urlencoded
+- phương thức delete em dùng để xóa dữ liệu, router là /, các tham số truyền vào gồm id em truyền qua form urlencoded
+- phương thức put em dùng để cập nhận dữ liệu, router là /, các tham số truyền vào gôm id, username, email phương thức này cần truyền đầy đủ các trường dữ liệu mới không bị lỗi
+- phương thức patch cũng dùng để cập nhật dữ liệu, router là /, tham số id bắt buộc phải truyền, trường user và email có cũng được không có cũng được
+- thao tác với cơ sở dữ liệu em tạo ra class database ở file databaseManipulation trong folder services
+    em sử dụng module fs để đọc ghi dữ liệu vào file json thay vì vào database
+- router sẽ điều hướng tới controller api.js để xử lý và trả dữ liệu
+
+#################################################
+Sử dụng redis
+#################################################
+
+sử dụng redis thay database
+- phương thức get với router /redis/:table để lấy dữ liệu từ server redis có key là params table
+- phương thức post với router /redis dùng để tạo ra field với data truyền vào key là table value là tên của table
+- phương thức delete vơi router /redis dùng để delete field trên server redis có data truyền vào có key là table, value là tên table
+- phương thức post với router /redis/add dùng để thêm dữ liệu vào 1 key trên server redis
+    có data truyền vào là key1 là table value là tên của table
+    key2 là data có value là 1 JSON, JSON có thể là 1 array các object hoặc là chỉ 1 object
+    object gồm name và email {"username":"linh111","email":"bababa@gmail.com"}
+- phương thức put với router /redis/edit dùng để sửa dữ liệu đã lưu trên server redis
+    có data truyền vào với key1 là table value là tên của table
+    key2 là data có value là 1 JSON, JSON có thể là 1 array các object hoặc là chỉ 1 object
+    object gồm id, name và email {"id":1,"username":"linh111","email":"bababa@gmail.com"}
+- phương thức delete với router /redis/delete dùng để xóa 1 phần tử lưu trong server redis
+    có data truyền vào với key1 là table value là tên của table
+    key2 là id có value là chỉ số id của phần tử cần xóa
+trên server redis đã tạo 1 table là "users" lưu danh sách các user

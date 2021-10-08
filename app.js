@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 
 
+
 global.__base = __dirname + '/';
 global.__pathConfig = __base + 'config/';
 global.__pathRoutes = __base + 'routes/';
@@ -17,6 +18,7 @@ global.__pathValidations = __base + 'validations/';
 global.__pathIMGS = __base + 'public/imgs/';
 
 const initWebRoutes = require(__pathRoutes + "web");
+
 
 
 let app = express();
