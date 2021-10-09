@@ -1,143 +1,94 @@
-const redis = require('redis');
+const redis = require("redis");
 //connect redis
 const client = redis.createClient({
-    host: 'redis-18521.c292.ap-southeast-1-1.ec2.cloud.redislabs.com',
+    host: "redis-18521.c292.ap-southeast-1-1.ec2.cloud.redislabs.com",
     port: 18521,
-    password: 'VP6hqisgh6EmJ9DQguRAdpy2J0AsOlCi'
+    password: "VP6hqisgh6EmJ9DQguRAdpy2J0AsOlCi",
 });
 
-client.on('error', err => {
-    console.log('Error ' + err);
+client.on("error", (err) => {
+    console.log("Error " + err);
 });
 // create a table in redis
-let setRedis = async (tableName)=>{
-
-    let result= await getRedis(tableName);
-    if(result === null){
-        let value = [];
-        client.set(tableName, value);
-
-        return true;
-    }
-
-    return false;
-}
-let getRedis = (tableName)=>{
+let setSingleRedis = (key, value) => {
+    client.set(key, value, (err, res)=>{
+        if(err) throw err;
+        return res;
+    });
+};
+let getSingleRedis = (key) => {
     return new Promise((res, rej)=>{
-        client.get(tableName, (err, data)=>{
-            if (err) console.log(err);
-            if (data !== null) res(data);
-            if (data === null ) res(data);
-        })
-    })
-}
-let delRedis = async (tableName)=>{
-    let result = await getRedis(tableName);
-    if(result !== null){
-        client.del(tableName)
-        return true;
-    }
-    return false;
-}
-let addRowRedis = async (tableName, value)=>{
-    let result ;
-    //add to table if value is array
-    if(typeof value === 'object' && typeof value.length === 'number'){
-        result = await getRedis(tableName);
-        result = result === null ? [] : JSON.parse(result);
-        console.log(result);
-        console.log(result.length);
-        console.log(value);
-        let n =result.length;
-        for(i= 0; i < value.length; i++){
-            let data = {};
-            data.id = n++;
-            data.username = value[i].username;
-            data.email = value[i].email;
-            result.push(data);
-        }
-        
-        console.log(result);
-        result = JSON.stringify(result);
-        await set(tableName, result);
-        return 'added array';
-    }
-    // if value is object
-
-    if(typeof value === 'object' && typeof value.length === 'undefined'){
-        result = await getRedis(tableName);
-        result = result == null ? [] : JSON.parse(result);
-        let data = {};
-        data.id = result.length;
-        data.username = value.username;
-        data.email = value.email;
-        result.push(data);
-        result = JSON.stringify(result);
-        await set(tableName, result);
-        return 'added object';
-    }
-    return false;
-}
-// edit one or many rows
-let editRowRedis = async (tableName, value)=>{
-    let result ;
-    if(typeof value === 'object' && typeof value.length === 'number'){
-        result = await getRedis(tableName);
-        result = result == null ? [] : JSON.parse(result);
-        value.forEach(element => {
-            result.map((e)=>{
-                if(element.id === e.id){
-                    e.username = element.username;
-                    e.email = element.email;
-                }
-                return e;
-            })
+        client.get(key, (err, response)=>{
+            if(err) throw err;
+            res(response);
         });
-        result = JSON.stringify(result);
-        await set(tableName, result);
-        return 'success edit list';
-    }
-    if(typeof value === 'object' && typeof value.length === 'undefined'){
-        result = await getRedis(tableName);
-        result = result == null ? [] : JSON.parse(result);
-        result.map((e)=>{
-            if(value.id === e.id){
-                e.username = value.username;
-                e.email = value.email
-            }
-            return e;
-        })
-        result = JSON.stringify(result);
-        await set(tableName, result);
-        return 'success edit a row';
-    }
-    return false;
-}
-// delete a row
-let delRowRedis = async(tableName, id)=>{
-    let result = await getRedis(tableName);
-        result = result == null ? [] : JSON.parse(result);
-    for(i=0; i< result.length; i++){
-        if(result[i].id === id){
-            result.splice(i, 1);
-            break;
-        }
-    }
-    result = JSON.stringify(result);
-    await set(tableName, result);
-    return result;
-}
-let set = (table, data)=>{
-    return new Promise((res,rej)=>{
-        client.set(table, data);
-        res('success');
     })
-}
+    
+};
+let editSingleRedis = (key, value) => {
+    client.set(key, value, (err, res)=>{
+        if(err) throw err;
+        return res;
+    });
+};
+let delRowRedis = (key) => {
+    client.del(key, (err, res)=>{
+        if(err) throw err;
+        return res;
+    });
+};
+let setListRedis = (key, value, position = true) => {
+    if (position) {
+        // rpush add an element to the last of array
+        // lpush add an element to the first of array
+        client.rpush(key, value, function (err, reply) {
+            console.log(reply); // 2
+            return reply;
+        });
+    } else {
+        // lpush add an element to the first of array
+        client.lpush(key, value, function (err, reply) {
+            console.log(reply); // 2
+            return reply;
+        });
+    }
+};
+let getListRedis = (key) => {
+    return new Promise((res, rej) => {
+        //   list the value
+        client.lrange(key, 0, -1, function (err, object) {
+
+            res(object);
+        });
+    });
+};
+let editListRedis = async(key, value, index) => {
+    let result = await getListRedis(key);
+
+    result = result.map((e, i)=>{
+
+        if(index === i){
+            e = value;
+            console.log(value);
+        }
+        return e
+    })
+    console.log(result);
+    var multi = client.multi();
+    for (var i=0; i<result.length; i++) {
+	    multi.rpush('testlist', result[i]);
+	}
+    multi.exec(function(err, response) {
+		if(err) throw err; 
+        return response;
+	})
+};
 module.exports = {
-    setRedis: setRedis,
-    getRedis: getRedis,
-    delRedis: delRedis,
-    addRowRedis: addRowRedis,
-    editRowRedis: editRowRedis,
-    delRowRedis: delRowRedis,
-}
+    setSingleRedis,
+    editSingleRedis,
+    getSingleRedis,
+    setListRedis,
+    getListRedis,
+    editListRedis,
+    delRowRedis,
+};
