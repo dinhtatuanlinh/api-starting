@@ -11,6 +11,7 @@ client.on("error", (err) => {
 });
 // create a table in redis
 let setSingleRedis = (key, value) => {
+    
     client.set(key, value, (err, res)=>{
         if(err) throw err;
         return res;
